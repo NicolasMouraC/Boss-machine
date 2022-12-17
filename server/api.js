@@ -7,6 +7,7 @@ const { createMeeting,
     deleteFromDatabasebyId,
     deleteAllFromDatabase } = require('./db.js'); 
 const apiRouter = express.Router();
+const checkMillionDollarIdea = require('./checkMillionDollarIdea.js');
 const morgan = require('morgan');
 
 apiRouter.use(morgan('dev'));
@@ -107,25 +108,20 @@ apiRouter.route('/ideas')
 
         res.send(ideas);
     })
-    .post((req, res, next) => {
+    .post(checkMillionDollarIdea, (req, res, next) => {
         const { name, description, weeklyRevenue, numWeeks } = req.body;
-        if (typeof name === 'string' && typeof description === 'string'
-        && typeof weeklyRevenue === 'number' && typeof numWeeks === 'number') {
-            const instance = {
-                name: name,
-                description: description,
-                weeklyRevenue: weeklyRevenue,
-                numWeeks: numWeeks
-            }
-            const databaseResponse = addToDatabase('ideas', instance);
+        const instance = {
+            name: name || '',
+            description: description || '',
+            weeklyRevenue: weeklyRevenue,
+            numWeeks: numWeeks
+        }
+        const databaseResponse = addToDatabase('ideas', instance);
 
-            if (databaseResponse) {
-                res.status(201).send(databaseResponse);
-            } else {
-                res.status(400).send('Not possible to complete POST request');
-            }
+        if (databaseResponse) {
+            res.status(201).send(databaseResponse);
         } else {
-            res.send(400).send('Wrong information type');
+            res.status(400).send('Not possible to complete POST request');
         }
     })
 
