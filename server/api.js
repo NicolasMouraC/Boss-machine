@@ -13,10 +13,19 @@ apiRouter.use(morgan('dev'));
 
 apiRouter.param('minionId', (req, res, next, minionId) => {
     if (isNaN(Number(minionId))) {
-        console.log(`MinionId: ${minionId}`);
         res.sendStatus(404);
     } else {
         req.id = minionId;
+
+        next();
+    }
+})
+
+apiRouter.param('ideaId', (req, res, next, ideaId) => {
+    if (isNaN(Number(ideaId))) {
+        res.sendStatus(404);
+    } else {
+        req.id = ideaId;
 
         next();
     }
@@ -85,6 +94,76 @@ apiRouter.route('/minions/:minionId')
         const wasMinionDeleted = deleteFromDatabasebyId('minions', req.id);
 
         if (wasMinionDeleted) {
+            res.status(204).send();
+        } else {
+            res.status(404).send();
+        }
+    })
+
+
+apiRouter.route('/ideas')
+    .get((req, res, next) => {
+        const ideas = getAllFromDatabase('ideas');
+
+        res.send(ideas);
+    })
+    .post((req, res, next) => {
+        const { name, description, weeklyRevenue, numWeeks } = req.body;
+        if (typeof name === 'string' && typeof description === 'string'
+        && typeof weeklyRevenue === 'number' && typeof numWeeks === 'number') {
+            const instance = {
+                name: name,
+                description: description,
+                weeklyRevenue: weeklyRevenue,
+                numWeeks: numWeeks
+            }
+            const databaseResponse = addToDatabase('ideas', instance);
+
+            if (databaseResponse) {
+                res.status(201).send(databaseResponse);
+            } else {
+                res.status(400).send('Not possible to complete POST request');
+            }
+        } else {
+            res.send(400).send('Wrong information type');
+        }
+    })
+
+apiRouter.route('/ideas/:ideaId')
+    .get((req, res, next) => {
+        const idea = getFromDatabaseById('ideas', req.id);
+
+        if (idea) {
+            res.send(idea)
+        } else {
+            res.status(404).send('Not Found')
+        }
+    })
+    .put((req, res, next) => {
+        const ideaInfo = getFromDatabaseById('ideas', req.id);
+        if (ideaInfo === undefined) {
+            res.sendStatus(404);
+        }
+
+        const instance = {
+            name: req.body.name || ideaInfo.name,
+            description: req.body.description || ideaInfo.description,
+            id: ideaInfo.id,
+            weeklyRevenue: req.body.weeklyRevenue || ideaInfo.weeklyRevenue,
+            numWeeks: req.body.numWeeks || ideaInfo.numWeeks
+        }
+        const idea = updateInstanceInDatabase('ideas', instance);
+
+        if (!idea) {
+            res.sendStatus(400);
+        } else {
+            res.send(idea);
+        }
+    })
+    .delete((req, res, next) => {
+        const wasIdeaDeleted = deleteFromDatabasebyId('ideas', req.id);
+
+        if (wasIdeaDeleted) {
             res.status(204).send();
         } else {
             res.status(404).send();
