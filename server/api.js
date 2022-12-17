@@ -170,4 +170,22 @@ apiRouter.route('/ideas/:ideaId')
         }
     })
 
+apiRouter.route('/meetings')
+    .get((req, res, next) => {
+        const meetings = getAllFromDatabase('meetings');
+
+        res.send(meetings);
+    })
+    .post((req, res, next) => {
+        const instance = createMeeting();
+        const meeting = addToDatabase('meetings', instance);
+
+        res.status(201).send(meeting);
+    })
+    .delete((req, res, next) => {
+        const meetings = deleteAllFromDatabase('meetings');
+
+        res.status(204).send();
+    })
+
 module.exports = apiRouter;
